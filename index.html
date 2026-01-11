@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Трекер Привычек</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📊</text></svg>">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <p class="date" id="currentDate"></p>
+        </header>
+
+        <div class="habits-container" id="habitsContainer">
+            <div class="loading" id="loading">Загрузка привычек...</div>
+        </div>
+
+        <div class="error-message" id="errorMessage" style="display: none;"></div>
+    </div>
+
+    <!-- Popup для сообщения об успехе -->
+    <div id="successPopup" class="popup-overlay" style="display: none;">
+        <div class="popup-content">
+            <div class="popup-icon">✅</div>
+            <h2 class="popup-title">Успешно отправлено!</h2>
+            <p class="popup-message" id="popupMessage"></p>
+            <button class="popup-button" onclick="closeSuccessPopup()">ОК</button>
+        </div>
+    </div>
+
+    <script src="config.js"></script>
+    <script src="notion-api.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
