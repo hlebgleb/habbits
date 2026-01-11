@@ -12,29 +12,13 @@ import sys
 app = Flask(__name__, static_folder='.')
 CORS(app)
 
-# Загружаем конфигурацию
-try:
-    # Импортируем config.js как модуль (нужно будет переписать на Python)
-    # Пока используем прямое чтение
-    import json
-    import re
-    
-    with open('config.js', 'r', encoding='utf-8') as f:
-        config_content = f.read()
-    
-    # Извлекаем значения из config.js
-    token_match = re.search(r"NOTION_TOKEN:\s*['\"]([^'\"]+)['\"]", config_content)
-    db_id_match = re.search(r"DATABASE_ID:\s*['\"]([^'\"]+)['\"]", config_content)
-    
-    if not token_match or not db_id_match:
-        print("❌ Ошибка: Не удалось найти NOTION_TOKEN или DATABASE_ID в config.js")
-        sys.exit(1)
-    
-    NOTION_TOKEN = token_match.group(1)
-    DATABASE_ID = db_id_match.group(1)
-    
-except Exception as e:
-    print(f"❌ Ошибка загрузки конфигурации: {e}")
+# Загружаем конфигурацию из переменных окружения
+NOTION_TOKEN = os.getenv('NOTION_TOKEN')
+DATABASE_ID = os.getenv('DATABASE_ID')
+
+if not NOTION_TOKEN or not DATABASE_ID:
+    print("❌ Ошибка: Не установлены переменные окружения NOTION_TOKEN и DATABASE_ID")
+    print("   Установите их в настройках Render или через .env файл")
     sys.exit(1)
 
 NOTION_API_VERSION = '2025-09-03'  # Версия с поддержкой multi-source databases
@@ -88,6 +72,11 @@ def notion_proxy(endpoint):
         return jsonify({'message': str(e)}), 500
 
 if __name__ == '__main__':
-    print("🚀 Запуск сервера на http://localhost:3000")
-    print("📊 Откройте http://localhost:3000 в браузере")
-    app.run(host='0.0.0.0', port=3000, debug=True)
+    port = int(os.getenv('PORT', 3000))
+    debug = os.getenv('FLASK_ENV') == 'development'
+    
+    print(f"🚀 Запуск сервера на порту {port}")
+    if debug:
+        print("📊 Откройте http://localhost:3000 в браузере")
+    
+    app.run(host='0.0.0.0', port=port, debug=debug)

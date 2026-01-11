@@ -1,5 +1,7 @@
 # Конфигурация с токенами (не коммитить!)
 config.js
+.env
+.env.local
 
 # Node.js
 node_modules/

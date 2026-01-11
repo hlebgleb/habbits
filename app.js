@@ -220,13 +220,6 @@ async function submitHabits() {
     const submitButton = document.getElementById('submitButton');
     const errorMessage = document.getElementById('errorMessage');
     
-    // Проверяем конфигурацию
-    if (!CONFIG.NOTION_TOKEN || !CONFIG.DATABASE_ID) {
-        errorMessage.textContent = 'Не настроены NOTION_TOKEN или DATABASE_ID. Проверьте config.js';
-        errorMessage.style.display = 'block';
-        return;
-    }
-
     // Получаем все привычки с их статусом
     const allHabits = [];
     for (const [key, value] of Object.entries(habitsState)) {

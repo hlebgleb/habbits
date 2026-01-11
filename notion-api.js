@@ -11,10 +11,6 @@ let cachedDataSourceId = null;
  * Запрос к Notion API через прокси-сервер
  */
 async function notionRequest(endpoint, method = 'GET', body = null) {
-    if (!CONFIG.NOTION_TOKEN || !CONFIG.DATABASE_ID) {
-        throw new Error('Не настроены NOTION_TOKEN или DATABASE_ID в config.js');
-    }
-
     const url = `${API_PROXY_BASE}${endpoint}`;
     const options = {
         method,
@@ -54,7 +50,7 @@ async function getDataSourceId() {
 
     try {
         // Получаем информацию о базе данных с версией 2025-09-03
-        const endpoint = `/databases/${CONFIG.DATABASE_ID}`;
+        const endpoint = `/databases/${DATABASE_CONFIG.DATABASE_ID}`;
         const response = await notionRequest(endpoint, 'GET');
         
         // Извлекаем первый data_source_id (для простых баз данных обычно один)
@@ -125,7 +121,7 @@ async function getHabits() {
  * Получить структуру базы данных (для понимания свойств)
  */
 async function getDatabaseSchema() {
-    const endpoint = `/databases/${CONFIG.DATABASE_ID}`;
+    const endpoint = `/databases/${DATABASE_CONFIG.DATABASE_ID}`;
     return await notionRequest(endpoint);
 }
 
