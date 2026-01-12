@@ -62,6 +62,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         return;
     }
     
+    // Ждем загрузки конфигурации с сервера
+    await waitForConfig();
+    
     updateCurrentDate();
     initializeHabits();
     initializeEnergyQuestion();

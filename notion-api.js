@@ -321,7 +321,7 @@ async function createEnergyRecord(question, answer, date = null) {
     }
 
     if (!DATABASE_CONFIG.ENERGY_DATABASE_ID) {
-        throw new Error('ENERGY_DATABASE_ID не настроен в database-config.js');
+        throw new Error('ENERGY_DATABASE_ID не настроен. Добавьте переменную окружения ENERGY_DATABASE_ID на сервере (Render) или в .env файл.');
     }
 
     // Получаем data_source_id для базы данных энергии
