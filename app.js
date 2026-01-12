@@ -32,8 +32,9 @@ let energyLevel = null; // Выбранный уровень энергии
 const COUNTER_HABITS = ['Deep work sessions', 'Learning sessions'];
 
 // Варианты ответа для вопроса об энергии
+// ВАЖНО: Названия должны точно совпадать с вариантами в Notion Select поле
 const ENERGY_LEVELS = [
-    { value: 1, label: 'Выжат, апатия' },
+    { value: 1, label: 'Выжат апатия' }, // Без запятой, как в Notion
     { value: 2, label: 'Тяжело' },
     { value: 3, label: 'Норм' },
     { value: 4, label: 'Хорошо' },
