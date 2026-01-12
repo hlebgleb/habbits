@@ -169,6 +169,8 @@ async function getEnergyDatabaseSchema() {
         
         // Извлекаем названия полей из схемы
         const properties = response.properties || {};
+        const propertyKeys = Object.keys(properties);
+        console.log('ℹ️ Поля базы данных энергии:', propertyKeys);
         const schema = {
             questionField: null, // Поле для вопроса (Title)
             dateField: null,     // Поле для даты (Date)
@@ -235,6 +237,13 @@ async function getEnergyDatabaseSchema() {
 
         cachedEnergyDatabaseSchema = schema;
         console.log('✅ Схема базы данных энергии:', schema);
+        if (!schema.questionField || !schema.dateField || !schema.answerField) {
+            throw new Error(
+                `Не удалось определить все необходимые поля. Доступные поля: ${propertyKeys.join(
+                    ', '
+                ) || 'нет полей'}.`
+            );
+        }
         return schema;
     } catch (error) {
         console.error('Ошибка получения схемы базы данных энергии:', error);
