@@ -32,7 +32,8 @@ async function notionRequest(endpoint, method = 'GET', body = null) {
         const data = await response.json();
 
         if (!response.ok) {
-            throw new Error(data.message || `Ошибка API: ${response.status}`);
+            console.error(`❌ Notion API ошибка ${response.status} для ${endpoint}:`, data);
+            throw new Error(data.message || data.error || `Ошибка API: ${response.status}`);
         }
 
         return data;
@@ -196,13 +197,43 @@ async function getEnergyDatabaseSchema() {
         }
         
         // Шаг 3: Получаем data_source для получения properties
-        const dsEndpoint = `/data_sources/${dataSourceId}`;
-        const dsResponse = await notionRequest(dsEndpoint, 'GET');
+        let properties = {};
         
-        console.log('🔍 Ответ data_source:', JSON.stringify(dsResponse, null, 2));
-        
-        // Шаг 4: Извлекаем properties из data_source
-        const properties = dsResponse.properties || {};
+        try {
+            const dsEndpoint = `/data_sources/${dataSourceId}`;
+            const dsResponse = await notionRequest(dsEndpoint, 'GET');
+            
+            console.log('🔍 Ответ data_source:', JSON.stringify(dsResponse, null, 2));
+            
+            // Шаг 4: Извлекаем properties из data_source
+            properties = dsResponse.properties || {};
+        } catch (error) {
+            console.warn('⚠️ Не удалось получить data_source напрямую, пробуем через query первой страницы:', error.message);
+            
+            // Fallback: получаем properties из первой страницы через query
+            try {
+                const queryEndpoint = `/data_sources/${dataSourceId}/query`;
+                const queryResponse = await notionRequest(queryEndpoint, 'POST', { page_size: 1 });
+                
+                console.log('🔍 Ответ query:', JSON.stringify(queryResponse, null, 2));
+                
+                // Если есть результаты, смотрим структуру свойств первой страницы
+                if (queryResponse.results && queryResponse.results.length > 0) {
+                    const firstPage = queryResponse.results[0];
+                    if (firstPage.properties) {
+                        properties = firstPage.properties;
+                        console.log('✅ Найдены properties через первую страницу:', Object.keys(properties));
+                    }
+                } else {
+                    // Если нет страниц, пробуем получить schema из database напрямую
+                    // (хотя это может не работать в новых версиях API)
+                    console.warn('⚠️ Нет страниц в базе данных, properties будут пустыми');
+                }
+            } catch (queryError) {
+                console.error('❌ Ошибка при получении properties через query:', queryError);
+                throw new Error(`Не удалось получить properties базы данных: ${error.message}`);
+            }
+        }
         
         const propertyKeys = Object.keys(properties);
         console.log('ℹ️ Поля базы данных энергии:', propertyKeys);

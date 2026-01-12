@@ -74,7 +74,9 @@ def notion_proxy(endpoint):
         
         # Возвращаем ответ
         if response.status_code >= 400:
-            return jsonify(response.json()), response.status_code
+            error_data = response.json() if response.content else {'error': 'No response body'}
+            print(f"❌ Notion API ошибка {response.status_code} для {endpoint}: {error_data}")
+            return jsonify(error_data), response.status_code
         
         return jsonify(response.json())
         
