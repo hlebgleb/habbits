@@ -8,6 +8,9 @@ const API_PROXY_BASE = '/api/notion';
 let cachedDataSourceId = null;
 let cachedEnergyDataSourceId = null;
 
+// Кэш для схемы базы данных энергии (названия полей)
+let cachedEnergyDatabaseSchema = null;
+
 /**
  * Запрос к Notion API через прокси-сервер
  */
@@ -146,6 +149,97 @@ async function getHabits() {
 async function getDatabaseSchema() {
     const endpoint = `/databases/${DATABASE_CONFIG.DATABASE_ID}`;
     return await notionRequest(endpoint);
+}
+
+/**
+ * Получить схему базы данных энергии и определить названия полей
+ */
+async function getEnergyDatabaseSchema() {
+    if (cachedEnergyDatabaseSchema) {
+        return cachedEnergyDatabaseSchema;
+    }
+
+    if (!DATABASE_CONFIG.ENERGY_DATABASE_ID) {
+        throw new Error('ENERGY_DATABASE_ID не настроен');
+    }
+
+    try {
+        const endpoint = `/databases/${DATABASE_CONFIG.ENERGY_DATABASE_ID}`;
+        const response = await notionRequest(endpoint, 'GET');
+        
+        // Извлекаем названия полей из схемы
+        const properties = response.properties || {};
+        const schema = {
+            questionField: null, // Поле для вопроса (Title)
+            dateField: null,     // Поле для даты (Date)
+            answerField: null    // Поле для ответа (Select)
+        };
+
+        // Ищем поля по типу и возможным названиям
+        for (const [fieldName, fieldInfo] of Object.entries(properties)) {
+            const fieldType = fieldInfo.type;
+            
+            // Ищем поле для вопроса (Title)
+            if (fieldType === 'title' && !schema.questionField) {
+                // Проверяем возможные названия
+                const lowerName = fieldName.toLowerCase();
+                if (lowerName.includes('вопрос') || lowerName.includes('question') || lowerName === 'name') {
+                    schema.questionField = fieldName;
+                }
+            }
+            
+            // Ищем поле для даты (Date)
+            if (fieldType === 'date' && !schema.dateField) {
+                const lowerName = fieldName.toLowerCase();
+                if (lowerName.includes('дата') || lowerName.includes('date')) {
+                    schema.dateField = fieldName;
+                }
+            }
+            
+            // Ищем поле для ответа (Select)
+            if (fieldType === 'select' && !schema.answerField) {
+                const lowerName = fieldName.toLowerCase();
+                if (lowerName.includes('ответ') || lowerName.includes('answer')) {
+                    schema.answerField = fieldName;
+                }
+            }
+        }
+
+        // Если не нашли по названиям, берем первые поля нужных типов
+        if (!schema.questionField) {
+            for (const [fieldName, fieldInfo] of Object.entries(properties)) {
+                if (fieldInfo.type === 'title') {
+                    schema.questionField = fieldName;
+                    break;
+                }
+            }
+        }
+
+        if (!schema.dateField) {
+            for (const [fieldName, fieldInfo] of Object.entries(properties)) {
+                if (fieldInfo.type === 'date') {
+                    schema.dateField = fieldName;
+                    break;
+                }
+            }
+        }
+
+        if (!schema.answerField) {
+            for (const [fieldName, fieldInfo] of Object.entries(properties)) {
+                if (fieldInfo.type === 'select') {
+                    schema.answerField = fieldName;
+                    break;
+                }
+            }
+        }
+
+        cachedEnergyDatabaseSchema = schema;
+        console.log('✅ Схема базы данных энергии:', schema);
+        return schema;
+    } catch (error) {
+        console.error('Ошибка получения схемы базы данных энергии:', error);
+        throw new Error(`Не удалось получить схему базы данных: ${error.message}`);
+    }
 }
 
 /**
@@ -324,36 +418,45 @@ async function createEnergyRecord(question, answer, date = null) {
         throw new Error('ENERGY_DATABASE_ID не настроен. Добавьте переменную окружения ENERGY_DATABASE_ID на сервере (Render) или в .env файл.');
     }
 
+    // Получаем схему базы данных для определения правильных названий полей
+    const schema = await getEnergyDatabaseSchema();
+    
+    if (!schema.questionField || !schema.dateField || !schema.answerField) {
+        throw new Error(`Не удалось определить все необходимые поля в базе данных. Найдены: вопрос="${schema.questionField}", дата="${schema.dateField}", ответ="${schema.answerField}". Убедитесь, что в базе данных есть поля типа Title, Date и Select.`);
+    }
+
     // Получаем data_source_id для базы данных энергии
     const dataSourceId = await getEnergyDataSourceId();
 
-    // Создаем новую запись
+    // Создаем новую запись с правильными названиями полей
     const endpoint = '/pages';
+    const properties = {
+        [schema.questionField]: {
+            title: [
+                {
+                    text: {
+                        content: question,
+                    },
+                },
+            ],
+        },
+        [schema.dateField]: {
+            date: {
+                start: date,
+            },
+        },
+        [schema.answerField]: {
+            select: {
+                name: answer,
+            },
+        },
+    };
+
     return await notionRequest(endpoint, 'POST', {
         parent: {
             type: 'data_source_id',
             data_source_id: dataSourceId,
         },
-        properties: {
-            Вопрос: {
-                title: [
-                    {
-                        text: {
-                            content: question,
-                        },
-                    },
-                ],
-            },
-            Дата: {
-                date: {
-                    start: date,
-                },
-            },
-            Ответ: {
-                select: {
-                    name: answer,
-                },
-            },
-        },
+        properties: properties,
     });
 }
