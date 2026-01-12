@@ -6,6 +6,7 @@ const API_PROXY_BASE = '/api/notion';
 
 // Кэш для data_source_id
 let cachedDataSourceId = null;
+let cachedEnergyDataSourceId = null;
 
 /**
  * Запрос к Notion API через прокси-сервер
@@ -41,23 +42,35 @@ async function notionRequest(endpoint, method = 'GET', body = null) {
 /**
  * Получить data_source_id для базы данных
  * Согласно документации 2025-09-03, нужно сначала получить data_source_id
+ * @param {string} databaseId - ID базы данных (опционально, по умолчанию DATABASE_ID)
  */
-async function getDataSourceId() {
+async function getDataSourceId(databaseId = null) {
+    const targetDatabaseId = databaseId || DATABASE_CONFIG.DATABASE_ID;
+    const isEnergyDb = databaseId === DATABASE_CONFIG.ENERGY_DATABASE_ID;
+    
     // Используем кэш, если уже получили
-    if (cachedDataSourceId) {
+    if (isEnergyDb && cachedEnergyDataSourceId) {
+        return cachedEnergyDataSourceId;
+    }
+    if (!isEnergyDb && cachedDataSourceId) {
         return cachedDataSourceId;
     }
 
     try {
         // Получаем информацию о базе данных с версией 2025-09-03
-        const endpoint = `/databases/${DATABASE_CONFIG.DATABASE_ID}`;
+        const endpoint = `/databases/${targetDatabaseId}`;
         const response = await notionRequest(endpoint, 'GET');
         
         // Извлекаем первый data_source_id (для простых баз данных обычно один)
         if (response.data_sources && response.data_sources.length > 0) {
-            cachedDataSourceId = response.data_sources[0].id;
-            console.log(`✅ Получен data_source_id: ${cachedDataSourceId}`);
-            return cachedDataSourceId;
+            const dataSourceId = response.data_sources[0].id;
+            if (isEnergyDb) {
+                cachedEnergyDataSourceId = dataSourceId;
+            } else {
+                cachedDataSourceId = dataSourceId;
+            }
+            console.log(`✅ Получен data_source_id: ${dataSourceId}`);
+            return dataSourceId;
         } else {
             throw new Error('База данных не содержит data sources');
         }
@@ -65,6 +78,16 @@ async function getDataSourceId() {
         console.error('Ошибка получения data_source_id:', error);
         throw new Error(`Не удалось получить data_source_id: ${error.message}`);
     }
+}
+
+/**
+ * Получить data_source_id для базы данных энергии
+ */
+async function getEnergyDataSourceId() {
+    if (!DATABASE_CONFIG.ENERGY_DATABASE_ID) {
+        throw new Error('ENERGY_DATABASE_ID не настроен в database-config.js');
+    }
+    return await getDataSourceId(DATABASE_CONFIG.ENERGY_DATABASE_ID);
 }
 
 /**
@@ -284,4 +307,53 @@ async function getAllHabitsList() {
         console.error('Ошибка получения списка привычек:', error);
         return [];
     }
+}
+
+/**
+ * Создать запись об уровне энергии в Notion
+ * @param {string} question - Текст вопроса
+ * @param {string} answer - Выбранный ответ
+ * @param {string} date - Дата в формате YYYY-MM-DD (по умолчанию сегодня)
+ */
+async function createEnergyRecord(question, answer, date = null) {
+    if (!date) {
+        date = new Date().toISOString().split('T')[0];
+    }
+
+    if (!DATABASE_CONFIG.ENERGY_DATABASE_ID) {
+        throw new Error('ENERGY_DATABASE_ID не настроен в database-config.js');
+    }
+
+    // Получаем data_source_id для базы данных энергии
+    const dataSourceId = await getEnergyDataSourceId();
+
+    // Создаем новую запись
+    const endpoint = '/pages';
+    return await notionRequest(endpoint, 'POST', {
+        parent: {
+            type: 'data_source_id',
+            data_source_id: dataSourceId,
+        },
+        properties: {
+            Вопрос: {
+                title: [
+                    {
+                        text: {
+                            content: question,
+                        },
+                    },
+                ],
+            },
+            Дата: {
+                date: {
+                    start: date,
+                },
+            },
+            Ответ: {
+                select: {
+                    name: answer,
+                },
+            },
+        },
+    });
 }

@@ -26,9 +26,19 @@ const HABITS_BY_CATEGORY = {
 };
 
 let habitsState = {};
+let energyLevel = null; // Выбранный уровень энергии
 
 // Привычки с каунтером (вместо тумблера)
 const COUNTER_HABITS = ['Deep work sessions', 'Learning sessions'];
+
+// Варианты ответа для вопроса об энергии
+const ENERGY_LEVELS = [
+    { value: 1, label: 'Выжат, апатия' },
+    { value: 2, label: 'Тяжело' },
+    { value: 3, label: 'Норм' },
+    { value: 4, label: 'Хорошо' },
+    { value: 5, label: 'Очень хорошо' }
+];
 
 // Инициализация при загрузке страницы
 document.addEventListener('DOMContentLoaded', async () => {
@@ -54,6 +64,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     
     updateCurrentDate();
     initializeHabits();
+    initializeEnergyQuestion();
     renderHabits();
 });
 
@@ -84,6 +95,13 @@ function initializeHabits() {
             habitsState[key] = COUNTER_HABITS.includes(habit) ? 0 : false;
         }
     }
+}
+
+/**
+ * Инициализировать вопрос об энергии
+ */
+function initializeEnergyQuestion() {
+    energyLevel = null;
 }
 
 /**
@@ -146,6 +164,32 @@ function renderHabits() {
         
         html += `</div>`;
     }
+
+    // Добавляем вопрос об энергии
+    html += `
+        <div class="energy-question-section">
+            <h2 class="category-title">💡 Вопрос дня</h2>
+            <div class="energy-question-item">
+                <div class="energy-question-text">
+                    <span class="energy-question-label">Какой мой уровень энергии и интереса к жизни сегодня?</span>
+                </div>
+                <div class="energy-options">
+                    ${ENERGY_LEVELS.map(level => `
+                        <label class="energy-option ${energyLevel === level.value ? 'selected' : ''}">
+                            <input 
+                                type="radio" 
+                                name="energyLevel" 
+                                value="${level.value}"
+                                ${energyLevel === level.value ? 'checked' : ''}
+                                onchange="selectEnergyLevel(${level.value})"
+                            >
+                            <span class="energy-option-label">${level.value}. ${level.label}</span>
+                        </label>
+                    `).join('')}
+                </div>
+            </div>
+        </div>
+    `;
 
     // Добавляем кнопку отправки внизу
     html += `
@@ -214,6 +258,23 @@ function decrementCounter(key) {
 }
 
 /**
+ * Выбрать уровень энергии
+ */
+function selectEnergyLevel(value) {
+    energyLevel = value;
+    
+    // Обновляем визуальное состояние
+    document.querySelectorAll('.energy-option').forEach(option => {
+        option.classList.remove('selected');
+    });
+    
+    const selectedOption = document.querySelector(`input[value="${value}"]`)?.closest('.energy-option');
+    if (selectedOption) {
+        selectedOption.classList.add('selected');
+    }
+}
+
+/**
  * Отправить все привычки в Notion (включенные и выключенные)
  */
 async function submitHabits() {
@@ -257,19 +318,33 @@ async function submitHabits() {
             createHabitRecord(habit.name, habit.completed, today)
         );
         
+        // Отправляем ответ на вопрос об энергии, если выбран
+        if (energyLevel !== null) {
+            const selectedLevel = ENERGY_LEVELS.find(level => level.value === energyLevel);
+            promises.push(
+                createEnergyRecord(
+                    'Какой мой уровень энергии и интереса к жизни сегодня?',
+                    selectedLevel.label,
+                    today
+                )
+            );
+        }
+        
         await Promise.all(promises);
         
         const completedCount = allHabits.filter(h => h.completed).length;
         const totalCount = allHabits.length;
+        const energyCount = energyLevel !== null ? 1 : 0;
         
-        console.log(`✅ Отправлено ${totalCount} привычек в Notion (${completedCount} выполнено)`);
+        console.log(`✅ Отправлено ${totalCount} привычек и ${energyCount} ответов об энергии в Notion`);
         
         // Показываем popup с успешным сообщением
-        showSuccessPopup(totalCount, completedCount);
+        showSuccessPopup(totalCount + energyCount, completedCount);
         
         // Сбрасываем состояние после закрытия popup
         setTimeout(() => {
             initializeHabits();
+            initializeEnergyQuestion();
             renderHabits();
         }, 100);
         
