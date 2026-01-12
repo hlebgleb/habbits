@@ -10,6 +10,11 @@ const DATABASE_CONFIG = {
     // ID базы данных Notion для вопросов об энергии
     // Загружается с сервера из переменной окружения ENERGY_DATABASE_ID
     ENERGY_DATABASE_ID: null, // Будет загружено с сервера
+    
+    // ID data source для базы данных энергии
+    // Загружается с сервера из переменной окружения ENERGY_DATA_SOURCE_ID
+    // Если не указан, будет получен автоматически из database
+    ENERGY_DATA_SOURCE_ID: null, // Будет загружено с сервера
 };
 
 // Загружаем конфигурацию с сервера при загрузке страницы
@@ -24,6 +29,9 @@ const configLoadPromise = (async function loadConfig() {
             }
             if (config.ENERGY_DATABASE_ID) {
                 DATABASE_CONFIG.ENERGY_DATABASE_ID = config.ENERGY_DATABASE_ID;
+            }
+            if (config.ENERGY_DATA_SOURCE_ID) {
+                DATABASE_CONFIG.ENERGY_DATA_SOURCE_ID = config.ENERGY_DATA_SOURCE_ID;
             }
             console.log('✅ Конфигурация загружена с сервера');
             configLoaded = true;

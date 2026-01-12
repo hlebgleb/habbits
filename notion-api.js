@@ -85,11 +85,20 @@ async function getDataSourceId(databaseId = null) {
 
 /**
  * Получить data_source_id для базы данных энергии
+ * Если ENERGY_DATA_SOURCE_ID задан в конфиге, используем его
+ * Иначе получаем из database
  */
 async function getEnergyDataSourceId() {
     if (!DATABASE_CONFIG.ENERGY_DATABASE_ID) {
-        throw new Error('ENERGY_DATABASE_ID не настроен в database-config.js');
+        throw new Error('ENERGY_DATABASE_ID не настроен');
     }
+    
+    // Если DATA_SOURCE_ID задан в конфиге, используем его
+    if (DATABASE_CONFIG.ENERGY_DATA_SOURCE_ID) {
+        return DATABASE_CONFIG.ENERGY_DATA_SOURCE_ID;
+    }
+    
+    // Иначе получаем из database
     return await getDataSourceId(DATABASE_CONFIG.ENERGY_DATABASE_ID);
 }
 
@@ -153,6 +162,7 @@ async function getDatabaseSchema() {
 
 /**
  * Получить схему базы данных энергии и определить названия полей
+ * Согласно новой версии Notion API, properties находятся в data_source, а не в database
  */
 async function getEnergyDatabaseSchema() {
     if (cachedEnergyDatabaseSchema) {
@@ -164,13 +174,39 @@ async function getEnergyDatabaseSchema() {
     }
 
     try {
-        const endpoint = `/databases/${DATABASE_CONFIG.ENERGY_DATABASE_ID}`;
-        const response = await notionRequest(endpoint, 'GET');
+        // Шаг 1: Получаем database для получения data_sources
+        const dbEndpoint = `/databases/${DATABASE_CONFIG.ENERGY_DATABASE_ID}`;
+        const dbResponse = await notionRequest(dbEndpoint, 'GET');
         
-        // Извлекаем названия полей из схемы
-        const properties = response.properties || {};
+        console.log('🔍 Ответ database:', JSON.stringify(dbResponse, null, 2));
+        
+        // Шаг 2: Получаем data_source_id
+        let dataSourceId = null;
+        
+        // Если DATA_SOURCE_ID задан в конфиге, используем его
+        if (DATABASE_CONFIG.ENERGY_DATA_SOURCE_ID) {
+            dataSourceId = DATABASE_CONFIG.ENERGY_DATA_SOURCE_ID;
+            console.log('✅ Используем ENERGY_DATA_SOURCE_ID из конфига:', dataSourceId);
+        } else if (dbResponse.data_sources && dbResponse.data_sources.length > 0) {
+            // Иначе берем первый data_source из database
+            dataSourceId = dbResponse.data_sources[0].id;
+            console.log('✅ Получен data_source_id из database:', dataSourceId);
+        } else {
+            throw new Error('У database нет data_sources. Убедитесь, что база данных создана правильно.');
+        }
+        
+        // Шаг 3: Получаем data_source для получения properties
+        const dsEndpoint = `/data_sources/${dataSourceId}`;
+        const dsResponse = await notionRequest(dsEndpoint, 'GET');
+        
+        console.log('🔍 Ответ data_source:', JSON.stringify(dsResponse, null, 2));
+        
+        // Шаг 4: Извлекаем properties из data_source
+        const properties = dsResponse.properties || {};
+        
         const propertyKeys = Object.keys(properties);
         console.log('ℹ️ Поля базы данных энергии:', propertyKeys);
+        console.log('ℹ️ Детали полей:', properties);
         const schema = {
             questionField: null, // Поле для вопроса (Title)
             dateField: null,     // Поле для даты (Date)

@@ -16,6 +16,7 @@ CORS(app)
 NOTION_TOKEN = os.getenv('NOTION_TOKEN')
 DATABASE_ID = os.getenv('DATABASE_ID')
 ENERGY_DATABASE_ID = os.getenv('ENERGY_DATABASE_ID', '')  # Опционально
+ENERGY_DATA_SOURCE_ID = os.getenv('ENERGY_DATA_SOURCE_ID', '')  # Опционально
 
 if not NOTION_TOKEN or not DATABASE_ID:
     print("❌ Ошибка: Не установлены переменные окружения NOTION_TOKEN и DATABASE_ID")
@@ -35,7 +36,8 @@ def get_config():
     """Получить конфигурацию для клиента"""
     return jsonify({
         'DATABASE_ID': DATABASE_ID,
-        'ENERGY_DATABASE_ID': ENERGY_DATABASE_ID or None
+        'ENERGY_DATABASE_ID': ENERGY_DATABASE_ID or None,
+        'ENERGY_DATA_SOURCE_ID': ENERGY_DATA_SOURCE_ID or None
     })
 
 @app.route('/<path:path>')

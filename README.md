@@ -73,7 +73,13 @@ Personal habit & life tracking system.
    Пример URL: `https://www.notion.so/your-workspace/a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6?v=...`
    ID: `a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6`
 
-4. **Для базы данных энергии:** Повторите шаги 1-3 для базы данных вопросов об энергии и добавьте переменную окружения `ENERGY_DATABASE_ID` на сервере (Render) или в `.env` файл для локальной разработки.
+4. **Для базы данных энергии:** 
+   - Повторите шаги 1-3 для базы данных вопросов об энергии
+   - Добавьте переменную окружения `ENERGY_DATABASE_ID` на сервере (Render) или в `.env` файл
+   - **Получите DATA_SOURCE_ID:**
+     1. Откройте в браузере: `https://ваш-домен/api/notion/databases/<ENERGY_DATABASE_ID>`
+     2. Найдите в ответе `data_sources[0].id`
+     3. Добавьте переменную окружения `ENERGY_DATA_SOURCE_ID` с этим значением (опционально, но рекомендуется)
 
 ## Деплой на Render
 
@@ -96,6 +102,7 @@ Personal habit & life tracking system.
      - `NOTION_TOKEN` - ваш токен интеграции Notion
      - `DATABASE_ID` - ID вашей базы данных для привычек
      - `ENERGY_DATABASE_ID` - ID вашей базы данных для вопросов об энергии (опционально)
+     - `ENERGY_DATA_SOURCE_ID` - ID data source для базы данных энергии (опционально, будет получен автоматически)
      - `PORT` - автоматически устанавливается Render (можно оставить по умолчанию)
 
 4. **Деплой:**
@@ -150,10 +157,14 @@ Personal habit & life tracking system.
    NOTION_TOKEN=ваш_токен_здесь
    DATABASE_ID=ваш_id_базы_данных_здесь
    ENERGY_DATABASE_ID=ваш_id_базы_данных_энергии_здесь
+   ENERGY_DATA_SOURCE_ID=ваш_data_source_id_здесь
    PORT=3000
    ```
    
-   **Примечание:** `ENERGY_DATABASE_ID` опционален. Если не указан, вопрос об энергии не будет сохраняться в Notion.
+   **Примечание:** 
+   - `ENERGY_DATABASE_ID` опционален. Если не указан, вопрос об энергии не будет сохраняться в Notion.
+   - `ENERGY_DATA_SOURCE_ID` опционален. Если не указан, будет получен автоматически из `ENERGY_DATABASE_ID`.
+   - Чтобы получить `ENERGY_DATA_SOURCE_ID`, откройте `http://localhost:3000/api/notion/databases/<ENERGY_DATABASE_ID>` и найдите `data_sources[0].id` в ответе.
 
 5. **Запустите сервер:**
    ```bash
