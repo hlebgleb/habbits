@@ -1,7 +1,7 @@
 // Основное приложение
 
-// Статичный список привычек с категориями
-const HABITS_BY_CATEGORY = {
+// Статичный список привычек с категориями для Глеба
+const GLEB_HABITS_BY_CATEGORY = {
     'Foundation & Health': [
         'Daily',
         'Healthy food',
@@ -24,6 +24,32 @@ const HABITS_BY_CATEGORY = {
         'Tier 2-4 reaching out'
     ]
 };
+
+// Список привычек для Даши (без категорий, просто список)
+const DASHA_HABITS = [
+    'Ложиться спать и вставать в одно и то же время',
+    'Делать короткую зарядку каждое утро',
+    'Пить стакан воды сразу после пробуждения',
+    'Планировать день на 5 минут утром',
+    'Читать минимум 10 страниц в день',
+    'Делать паузы без экрана каждый час',
+    'Записывать ключевые мысли или идеи в заметки',
+    'Есть медленно и без телефона',
+    'Выходить на прогулку каждый день',
+    'Подводить короткий итог дня вечером'
+];
+
+// Получить список привычек в зависимости от пользователя
+function getHabitsByCategory() {
+    const user = DATABASE_CONFIG.USER || 'gleb';
+    if (user === 'dasha') {
+        // Для Даши возвращаем простую структуру с одной категорией
+        return {
+            'Привычки': DASHA_HABITS
+        };
+    }
+    return GLEB_HABITS_BY_CATEGORY;
+}
 
 let habitsState = {};
 let energyLevel = null; // Выбранный уровень энергии
@@ -92,7 +118,8 @@ function updateCurrentDate() {
  */
 function initializeHabits() {
     habitsState = {};
-    for (const [category, habits] of Object.entries(HABITS_BY_CATEGORY)) {
+    const habitsByCategory = getHabitsByCategory();
+    for (const [category, habits] of Object.entries(habitsByCategory)) {
         for (const habit of habits) {
             const key = `${category}::${habit}`;
             // Для привычек с каунтером используем 0, для остальных false
@@ -114,12 +141,17 @@ function initializeEnergyQuestion() {
 function renderHabits() {
     const container = document.getElementById('habitsContainer');
     const loading = document.getElementById('loading');
-    loading.style.display = 'none';
+    if (loading) {
+        loading.style.display = 'none';
+    }
 
     let html = '';
+    const habitsByCategory = getHabitsByCategory();
+    const user = DATABASE_CONFIG.USER || 'gleb';
+    const showEnergyQuestion = user === 'gleb';
 
     // Рендерим категории и привычки
-    for (const [category, habits] of Object.entries(HABITS_BY_CATEGORY)) {
+    for (const [category, habits] of Object.entries(habitsByCategory)) {
         html += `<div class="category-section">`;
         html += `<h2 class="category-title">${category}</h2>`;
         
@@ -169,31 +201,33 @@ function renderHabits() {
         html += `</div>`;
     }
 
-    // Добавляем вопрос об энергии
-    html += `
-        <div class="energy-question-section">
-            <h2 class="category-title">💡 Вопрос дня</h2>
-            <div class="energy-question-item">
-                <div class="energy-question-text">
-                    <span class="energy-question-label">Какой мой уровень энергии и интереса к жизни сегодня?</span>
-                </div>
-                <div class="energy-options">
-                    ${ENERGY_LEVELS.map(level => `
-                        <label class="energy-option ${energyLevel === level.value ? 'selected' : ''}">
-                            <input 
-                                type="radio" 
-                                name="energyLevel" 
-                                value="${level.value}"
-                                ${energyLevel === level.value ? 'checked' : ''}
-                                onchange="selectEnergyLevel(${level.value})"
-                            >
-                            <span class="energy-option-label">${level.value}. ${level.label}</span>
-                        </label>
-                    `).join('')}
+    // Добавляем вопрос об энергии только для Глеба
+    if (showEnergyQuestion) {
+        html += `
+            <div class="energy-question-section">
+                <h2 class="category-title">💡 Вопрос дня</h2>
+                <div class="energy-question-item">
+                    <div class="energy-question-text">
+                        <span class="energy-question-label">Какой мой уровень энергии и интереса к жизни сегодня?</span>
+                    </div>
+                    <div class="energy-options">
+                        ${ENERGY_LEVELS.map(level => `
+                            <label class="energy-option ${energyLevel === level.value ? 'selected' : ''}">
+                                <input 
+                                    type="radio" 
+                                    name="energyLevel" 
+                                    value="${level.value}"
+                                    ${energyLevel === level.value ? 'checked' : ''}
+                                    onchange="selectEnergyLevel(${level.value})"
+                                >
+                                <span class="energy-option-label">${level.value}. ${level.label}</span>
+                            </label>
+                        `).join('')}
+                    </div>
                 </div>
             </div>
-        </div>
-    `;
+        `;
+    }
 
     // Добавляем кнопку отправки внизу
     html += `
@@ -322,8 +356,9 @@ async function submitHabits() {
             createHabitRecord(habit.name, habit.completed, today)
         );
         
-        // Отправляем ответ на вопрос об энергии, если выбран
-        if (energyLevel !== null) {
+        // Отправляем ответ на вопрос об энергии, если выбран (только для Глеба)
+        const user = DATABASE_CONFIG.USER || 'gleb';
+        if (user === 'gleb' && energyLevel !== null) {
             const selectedLevel = ENERGY_LEVELS.find(level => level.value === energyLevel);
             promises.push(
                 createEnergyRecord(
@@ -338,7 +373,7 @@ async function submitHabits() {
         
         const completedCount = allHabits.filter(h => h.completed).length;
         const totalCount = allHabits.length;
-        const energyCount = energyLevel !== null ? 1 : 0;
+        const energyCount = (user === 'gleb' && energyLevel !== null) ? 1 : 0;
         
         console.log(`✅ Отправлено ${totalCount} привычек и ${energyCount} ответов об энергии в Notion`);
         
@@ -416,6 +451,22 @@ function getHabitEmoji(habitName) {
         'date': '💑',
         'offline': '🎉',
         'reaching out': '💬',
+        // Эмодзи для привычек Даши
+        'ложиться спать': '😴',
+        'вставать': '😴',
+        'зарядка': '💪',
+        'вода': '💧',
+        'планировать': '📅',
+        'читать': '📚',
+        'паузы': '⏸️',
+        'экран': '📱',
+        'записывать': '✍️',
+        'заметки': '📝',
+        'есть': '🍽️',
+        'медленно': '🍽️',
+        'прогулка': '🚶',
+        'итог': '📊',
+        'день': '📊',
     };
 
     const lowerName = habitName.toLowerCase();

@@ -14,13 +14,21 @@ CORS(app)
 
 # Загружаем конфигурацию из переменных окружения
 NOTION_TOKEN = os.getenv('NOTION_TOKEN')
-DATABASE_ID = os.getenv('DATABASE_ID')
-ENERGY_DATABASE_ID = os.getenv('ENERGY_DATABASE_ID', '')  # Опционально
-ENERGY_DATA_SOURCE_ID = os.getenv('ENERGY_DATA_SOURCE_ID', '')  # Опционально
+# База данных для Глеба (по умолчанию)
+GLEB_DATABASE_ID = os.getenv('DATABASE_ID')  # Для обратной совместимости
+GLEB_ENERGY_DATABASE_ID = os.getenv('ENERGY_DATABASE_ID', '')  # Опционально
+GLEB_ENERGY_DATA_SOURCE_ID = os.getenv('ENERGY_DATA_SOURCE_ID', '')  # Опционально
+# База данных для Даши
+DASHA_DATABASE_ID = os.getenv('DASHA_DATABASE_ID', '')
 
-if not NOTION_TOKEN or not DATABASE_ID:
-    print("❌ Ошибка: Не установлены переменные окружения NOTION_TOKEN и DATABASE_ID")
-    print("   Установите их в настройках Render или через .env файл")
+if not NOTION_TOKEN:
+    print("❌ Ошибка: Не установлена переменная окружения NOTION_TOKEN")
+    print("   Установите ее в настройках Render или через .env файл")
+    sys.exit(1)
+
+if not GLEB_DATABASE_ID:
+    print("❌ Ошибка: Не установлена переменная окружения DATABASE_ID (для Глеба)")
+    print("   Установите ее в настройках Render или через .env файл")
     sys.exit(1)
 
 NOTION_API_VERSION = '2025-09-03'  # Версия с поддержкой multi-source databases
@@ -28,17 +36,43 @@ NOTION_API_BASE = 'https://api.notion.com/v1'
 
 @app.route('/')
 def index():
-    """Главная страница"""
+    """Главная страница - редирект на /gleb"""
+    from flask import redirect
+    return redirect('/gleb')
+
+@app.route('/gleb')
+def gleb():
+    """Страница для Глеба"""
+    return send_from_directory('.', 'index.html')
+
+@app.route('/dasha')
+def dasha():
+    """Страница для Даши"""
     return send_from_directory('.', 'index.html')
 
 @app.route('/api/config')
 def get_config():
     """Получить конфигурацию для клиента"""
-    return jsonify({
-        'DATABASE_ID': DATABASE_ID,
-        'ENERGY_DATABASE_ID': ENERGY_DATABASE_ID or None,
-        'ENERGY_DATA_SOURCE_ID': ENERGY_DATA_SOURCE_ID or None
-    })
+    # Определяем пользователя из заголовка Referer или параметра
+    user = request.args.get('user', 'gleb')
+    
+    if user == 'dasha':
+        if not DASHA_DATABASE_ID:
+            return jsonify({'error': 'DASHA_DATABASE_ID не настроен'}), 500
+        return jsonify({
+            'DATABASE_ID': DASHA_DATABASE_ID,
+            'ENERGY_DATABASE_ID': None,  # У Даши нет вопроса об энергии
+            'ENERGY_DATA_SOURCE_ID': None,
+            'USER': 'dasha'
+        })
+    else:
+        # Глеб (по умолчанию)
+        return jsonify({
+            'DATABASE_ID': GLEB_DATABASE_ID,
+            'ENERGY_DATABASE_ID': GLEB_ENERGY_DATABASE_ID or None,
+            'ENERGY_DATA_SOURCE_ID': GLEB_ENERGY_DATA_SOURCE_ID or None,
+            'USER': 'gleb'
+        })
 
 @app.route('/<path:path>')
 def static_files(path):

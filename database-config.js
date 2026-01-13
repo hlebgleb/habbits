@@ -4,7 +4,7 @@
 
 const DATABASE_CONFIG = {
     // ID базы данных Notion для привычек
-    // Загружается с сервера из переменной окружения DATABASE_ID
+    // Загружается с сервера из переменной окружения DATABASE_ID или DASHA_DATABASE_ID
     DATABASE_ID: '2e5911c2c35f8043b1d1ee2658135eb3', // Fallback для локальной разработки
     
     // ID базы данных Notion для вопросов об энергии
@@ -15,13 +15,27 @@ const DATABASE_CONFIG = {
     // Загружается с сервера из переменной окружения ENERGY_DATA_SOURCE_ID
     // Если не указан, будет получен автоматически из database
     ENERGY_DATA_SOURCE_ID: null, // Будет загружено с сервера
+    
+    // Текущий пользователь
+    USER: 'gleb', // Будет определен из URL
 };
+
+// Определяем пользователя из URL
+function getCurrentUser() {
+    const path = window.location.pathname;
+    if (path.includes('/dasha')) {
+        return 'dasha';
+    }
+    return 'gleb'; // По умолчанию
+}
 
 // Загружаем конфигурацию с сервера при загрузке страницы
 let configLoaded = false;
+let currentUser = getCurrentUser();
 const configLoadPromise = (async function loadConfig() {
     try {
-        const response = await fetch('/api/config');
+        const user = getCurrentUser();
+        const response = await fetch(`/api/config?user=${user}`);
         if (response.ok) {
             const config = await response.json();
             if (config.DATABASE_ID) {
@@ -33,7 +47,10 @@ const configLoadPromise = (async function loadConfig() {
             if (config.ENERGY_DATA_SOURCE_ID) {
                 DATABASE_CONFIG.ENERGY_DATA_SOURCE_ID = config.ENERGY_DATA_SOURCE_ID;
             }
-            console.log('✅ Конфигурация загружена с сервера');
+            // Сохраняем информацию о пользователе
+            DATABASE_CONFIG.USER = config.USER || user;
+            currentUser = DATABASE_CONFIG.USER;
+            console.log(`✅ Конфигурация загружена с сервера для пользователя: ${currentUser}`);
             configLoaded = true;
         }
     } catch (error) {
