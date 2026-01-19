@@ -191,6 +191,8 @@ function formatDateISO(date) {
  * Загрузить данные об энергии за период
  */
 async function fetchEnergyData(startDate, endDate) {
+    console.log(`📊 Загрузка данных энергии за ${startDate} - ${endDate}`);
+    
     if (!DATABASE_CONFIG.ENERGY_DATABASE_ID) {
         console.warn('ENERGY_DATABASE_ID не настроен');
         return [];
@@ -198,12 +200,15 @@ async function fetchEnergyData(startDate, endDate) {
 
     try {
         const dataSourceId = await getEnergyDataSourceId();
+        console.log('📊 Energy dataSourceId:', dataSourceId);
+        
         const endpoint = `/data_sources/${dataSourceId}/query`;
 
         // Получаем схему для определения названий полей
         const schema = await getEnergyDatabaseSchema();
+        console.log('📊 Energy schema:', schema);
 
-        const response = await notionRequest(endpoint, 'POST', {
+        const filterBody = {
             filter: {
                 and: [
                     {
@@ -221,16 +226,23 @@ async function fetchEnergyData(startDate, endDate) {
                 ]
             },
             page_size: 100
-        });
+        };
+        console.log('📊 Energy query filter:', JSON.stringify(filterBody, null, 2));
+
+        const response = await notionRequest(endpoint, 'POST', filterBody);
+        console.log('📊 Energy response:', response);
 
         // Парсим результаты
         const results = [];
         if (response.results) {
+            console.log(`📊 Найдено ${response.results.length} записей энергии`);
             for (const page of response.results) {
                 const answerProp = page.properties?.[schema.answerField];
+                console.log('📊 Answer prop:', answerProp);
                 if (answerProp?.select?.name) {
                     const answerText = answerProp.select.name.toLowerCase();
                     const score = ENERGY_MAPPING[answerText];
+                    console.log(`📊 Answer: "${answerText}" -> score: ${score}`);
                     if (score !== undefined) {
                         results.push({
                             date: page.properties?.[schema.dateField]?.date?.start,
@@ -242,9 +254,10 @@ async function fetchEnergyData(startDate, endDate) {
             }
         }
 
+        console.log('📊 Energy results:', results);
         return results;
     } catch (error) {
-        console.error('Ошибка загрузки данных об энергии:', error);
+        console.error('❌ Ошибка загрузки данных об энергии:', error);
         return [];
     }
 }
@@ -253,11 +266,15 @@ async function fetchEnergyData(startDate, endDate) {
  * Загрузить данные о привычках за период
  */
 async function fetchHabitsData(startDate, endDate) {
+    console.log(`🎯 Загрузка данных привычек за ${startDate} - ${endDate}`);
+    
     try {
         const dataSourceId = await getDataSourceId();
+        console.log('🎯 Habits dataSourceId:', dataSourceId);
+        
         const endpoint = `/data_sources/${dataSourceId}/query`;
 
-        const response = await notionRequest(endpoint, 'POST', {
+        const filterBody = {
             filter: {
                 and: [
                     {
@@ -281,11 +298,16 @@ async function fetchHabitsData(startDate, endDate) {
                 ]
             },
             page_size: 100
-        });
+        };
+        console.log('🎯 Habits query filter:', JSON.stringify(filterBody, null, 2));
+
+        const response = await notionRequest(endpoint, 'POST', filterBody);
+        console.log('🎯 Habits response:', response);
 
         // Подсчитываем количество выполненных привычек
         const habitCounts = {};
         if (response.results) {
+            console.log(`🎯 Найдено ${response.results.length} записей привычек`);
             for (const page of response.results) {
                 const habitProp = page.properties?.Habit;
                 if (habitProp?.title?.[0]?.plain_text) {
@@ -295,9 +317,10 @@ async function fetchHabitsData(startDate, endDate) {
             }
         }
 
+        console.log('🎯 Habits counts:', habitCounts);
         return habitCounts;
     } catch (error) {
-        console.error('Ошибка загрузки данных о привычках:', error);
+        console.error('❌ Ошибка загрузки данных о привычках:', error);
         return {};
     }
 }
