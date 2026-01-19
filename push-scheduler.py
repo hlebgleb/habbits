@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Планировщик push-уведомлений
-Отправляет напоминания в 22:00 по московскому времени
+Отправляет напоминания в 23:00 по московскому времени
 """
 
 import os
@@ -153,15 +153,15 @@ def main():
     
     scheduler = BlockingScheduler(timezone=MOSCOW_TZ)
     
-    # Ежедневно в 22:00 по Москве
+    # Ежедневно в 23:00 по Москве
     scheduler.add_job(
         send_daily_reminder,
-        CronTrigger(hour=22, minute=0, timezone=MOSCOW_TZ),
+        CronTrigger(hour=23, minute=0, timezone=MOSCOW_TZ),
         id='daily_reminder',
-        name='Ежедневное напоминание в 22:00'
+        name='Ежедневное напоминание в 23:00'
     )
     
-    print(f"\n⏰ Напоминания будут отправляться в 22:00 MSK")
+    print(f"\n⏰ Напоминания будут отправляться в 23:00 MSK")
     print("Нажмите Ctrl+C для остановки\n")
     
     # Для отладки: отправить сразу
