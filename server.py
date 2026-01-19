@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """
 Прокси-сервер для обхода CORS при работе с Notion API
++ Push-уведомления для PWA
 """
 
 from flask import Flask, request, jsonify, send_from_directory
@@ -8,9 +9,27 @@ from flask_cors import CORS
 import requests
 import os
 import sys
+import json
+from pathlib import Path
+
+# Push notifications
+try:
+    from pywebpush import webpush, WebPushException
+    PUSH_AVAILABLE = True
+except ImportError:
+    PUSH_AVAILABLE = False
+    print("⚠️ pywebpush не установлен, push-уведомления недоступны")
 
 app = Flask(__name__, static_folder='.')
 CORS(app)
+
+# Путь для хранения подписок (используем /app/data в Docker)
+if os.path.exists('/app/data'):
+    SUBSCRIPTIONS_FILE = Path('/app/data/push_subscriptions.json')
+elif os.path.exists('/opt/habbits'):
+    SUBSCRIPTIONS_FILE = Path('/opt/habbits/push_subscriptions.json')
+else:
+    SUBSCRIPTIONS_FILE = Path('push_subscriptions.json')
 
 # Загружаем конфигурацию из переменных окружения
 NOTION_TOKEN = os.getenv('NOTION_TOKEN')
@@ -20,6 +39,14 @@ GLEB_ENERGY_DATABASE_ID = os.getenv('ENERGY_DATABASE_ID', '')  # Опциона�
 GLEB_ENERGY_DATA_SOURCE_ID = os.getenv('ENERGY_DATA_SOURCE_ID', '')  # Опционально
 # База данных для Даши
 DASHA_DATABASE_ID = os.getenv('DASHA_DATABASE_ID', '')
+
+# VAPID ключи для push-уведомлений
+# Генерируются один раз: python -c "from pywebpush import webpush; from cryptography.hazmat.primitives.asymmetric import ec; from cryptography.hazmat.backends import default_backend; import base64; key = ec.generate_private_key(ec.SECP256R1(), default_backend()); print('Private:', base64.urlsafe_b64encode(key.private_numbers().private_value.to_bytes(32, 'big')).decode()); pub = key.public_key().public_numbers(); print('Public:', base64.urlsafe_b64encode(b'\\x04' + pub.x.to_bytes(32, 'big') + pub.y.to_bytes(32, 'big')).decode())"
+VAPID_PRIVATE_KEY = os.getenv('VAPID_PRIVATE_KEY', '')
+VAPID_PUBLIC_KEY = os.getenv('VAPID_PUBLIC_KEY', '')
+VAPID_CLAIMS = {
+    "sub": "mailto:gleb@hlebgleb.ru"  # Замените на ваш email
+}
 
 if not NOTION_TOKEN:
     print("❌ Ошибка: Не установлена переменная окружения NOTION_TOKEN")
@@ -83,6 +110,130 @@ def get_config():
 def static_files(path):
     """Статические файлы"""
     return send_from_directory('.', path)
+
+# ==================== Push Notifications ====================
+
+def load_subscriptions():
+    """Загрузить подписки из файла"""
+    if SUBSCRIPTIONS_FILE.exists():
+        try:
+            with open(SUBSCRIPTIONS_FILE, 'r') as f:
+                return json.load(f)
+        except:
+            return {}
+    return {}
+
+def save_subscriptions(subscriptions):
+    """Сохранить подписки в файл"""
+    with open(SUBSCRIPTIONS_FILE, 'w') as f:
+        json.dump(subscriptions, f, indent=2)
+
+@app.route('/api/push/vapid-key')
+def get_vapid_key():
+    """Получить публичный VAPID ключ"""
+    if not VAPID_PUBLIC_KEY:
+        return jsonify({'error': 'VAPID ключи не настроены'}), 500
+    return jsonify({'publicKey': VAPID_PUBLIC_KEY})
+
+@app.route('/api/push/subscribe', methods=['POST'])
+def push_subscribe():
+    """Подписаться на push-уведомления"""
+    if not PUSH_AVAILABLE:
+        return jsonify({'error': 'Push не поддерживается'}), 500
+    
+    data = request.get_json()
+    subscription = data.get('subscription')
+    user = data.get('user', 'gleb')
+    
+    if not subscription:
+        return jsonify({'error': 'Нет данных подписки'}), 400
+    
+    # Загружаем существующие подписки
+    subscriptions = load_subscriptions()
+    
+    # Добавляем подписку для пользователя
+    if user not in subscriptions:
+        subscriptions[user] = []
+    
+    # Проверяем, нет ли уже такой подписки
+    endpoint = subscription.get('endpoint')
+    existing_endpoints = [s.get('endpoint') for s in subscriptions[user]]
+    
+    if endpoint not in existing_endpoints:
+        subscriptions[user].append(subscription)
+        save_subscriptions(subscriptions)
+        print(f"✅ Добавлена push-подписка для {user}")
+    
+    return jsonify({'success': True})
+
+@app.route('/api/push/unsubscribe', methods=['POST'])
+def push_unsubscribe():
+    """Отписаться от push-уведомлений"""
+    data = request.get_json()
+    endpoint = data.get('endpoint')
+    user = data.get('user', 'gleb')
+    
+    if not endpoint:
+        return jsonify({'error': 'Нет endpoint'}), 400
+    
+    subscriptions = load_subscriptions()
+    
+    if user in subscriptions:
+        subscriptions[user] = [s for s in subscriptions[user] if s.get('endpoint') != endpoint]
+        save_subscriptions(subscriptions)
+        print(f"✅ Удалена push-подписка для {user}")
+    
+    return jsonify({'success': True})
+
+@app.route('/api/push/send', methods=['POST'])
+def send_push():
+    """Отправить push-уведомление (для тестирования)"""
+    if not PUSH_AVAILABLE:
+        return jsonify({'error': 'Push не поддерживается'}), 500
+    
+    if not VAPID_PRIVATE_KEY:
+        return jsonify({'error': 'VAPID ключи не настроены'}), 500
+    
+    data = request.get_json()
+    user = data.get('user', 'gleb')
+    message = data.get('message', 'Не забудь отметить привычки!')
+    
+    subscriptions = load_subscriptions()
+    user_subs = subscriptions.get(user, [])
+    
+    if not user_subs:
+        return jsonify({'error': 'Нет подписок для пользователя'}), 404
+    
+    sent = 0
+    failed = 0
+    
+    payload = json.dumps({
+        'title': 'Трекер Привычек',
+        'body': message,
+        'icon': '/icons/icon-192.png',
+        'data': {'url': f'/{user}'}
+    })
+    
+    for sub in user_subs:
+        try:
+            webpush(
+                subscription_info=sub,
+                data=payload,
+                vapid_private_key=VAPID_PRIVATE_KEY,
+                vapid_claims=VAPID_CLAIMS
+            )
+            sent += 1
+        except WebPushException as e:
+            print(f"❌ Ошибка отправки push: {e}")
+            failed += 1
+            # Если подписка невалидна, удаляем её
+            if e.response and e.response.status_code in [404, 410]:
+                subscriptions[user] = [s for s in subscriptions[user] if s.get('endpoint') != sub.get('endpoint')]
+                save_subscriptions(subscriptions)
+    
+    return jsonify({'sent': sent, 'failed': failed})
+
+# ==================== Notion API Proxy ====================
 
 @app.route('/api/notion/<path:endpoint>', methods=['GET', 'POST', 'PATCH'])
 def notion_proxy(endpoint):

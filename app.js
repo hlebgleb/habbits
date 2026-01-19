@@ -94,6 +94,11 @@ document.addEventListener('DOMContentLoaded', async () => {
     initializeHabits();
     initializeEnergyQuestion();
     renderHabits();
+    
+    // Инициализация push-уведомлений
+    if (typeof createNotificationButton === 'function') {
+        createNotificationButton('notificationSection');
+    }
 });
 
 /**

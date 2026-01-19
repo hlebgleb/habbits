@@ -695,6 +695,122 @@ input:disabled + .toggle-slider {
     color: #721c24;
 }
 
+/* ==================== */
+/* Push Notifications   */
+/* ==================== */
+
+.notification-section-container {
+    margin-top: 20px;
+}
+
+.push-section {
+    background: #f8f9fa;
+    border-radius: 12px;
+    padding: 25px;
+    margin-top: 20px;
+    border: 2px solid #e9ecef;
+    text-align: center;
+}
+
+.push-section h3 {
+    font-size: 1.2rem;
+    color: #2d3748;
+    margin-bottom: 15px;
+}
+
+.push-section p {
+    color: #6c757d;
+    margin-bottom: 15px;
+    line-height: 1.6;
+}
+
+.push-button {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    padding: 12px 30px;
+    font-size: 1rem;
+    font-weight: 600;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+}
+
+.push-button:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(102, 126, 234, 0.5);
+}
+
+.push-button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.push-button-disable {
+    background: #e9ecef;
+    color: #6c757d;
+    box-shadow: none;
+}
+
+.push-button-disable:hover:not(:disabled) {
+    background: #dee2e6;
+    transform: none;
+    box-shadow: none;
+}
+
+.push-enabled {
+    background: #d4edda;
+    border-color: #c3e6cb;
+}
+
+.push-enabled h3 {
+    color: #155724;
+}
+
+.push-enabled p {
+    color: #155724;
+}
+
+.push-unsupported {
+    color: #6c757d;
+    font-style: italic;
+    text-align: center;
+    padding: 20px;
+}
+
+.push-note {
+    font-size: 0.9rem;
+    color: #6c757d;
+    font-style: italic;
+}
+
+.pwa-install-hint {
+    background: white;
+    border-radius: 10px;
+    padding: 20px;
+    margin: 15px 0;
+    text-align: left;
+    border: 1px solid #e9ecef;
+}
+
+.pwa-install-hint p {
+    font-weight: 600;
+    color: #2d3748;
+    margin-bottom: 10px;
+}
+
+.pwa-install-hint ol {
+    margin: 0;
+    padding-left: 20px;
+    color: #495057;
+}
+
+.pwa-install-hint li {
+    margin-bottom: 8px;
+    line-height: 1.5;
+}
+
 /* Адаптив для статистики */
 @media (max-width: 600px) {
     .stat-title {
