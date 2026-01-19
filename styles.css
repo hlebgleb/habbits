@@ -34,6 +34,18 @@ header h1 {
     opacity: 0.9;
 }
 
+/* Mascot GIF */
+.header-gif {
+    margin-bottom: 15px;
+}
+
+.mascot-gif {
+    width: 120px;
+    height: auto;
+    border-radius: 12px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+}
+
 .habits-container {
     background: white;
     border-radius: 20px;
