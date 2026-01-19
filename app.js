@@ -99,6 +99,15 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (typeof createNotificationButton === 'function') {
         createNotificationButton('notificationSection');
     }
+    
+    // Ссылка на статистику только для Глеба
+    const user = DATABASE_CONFIG.USER || 'gleb';
+    if (user === 'gleb') {
+        const statLinkSection = document.getElementById('statLinkSection');
+        if (statLinkSection) {
+            statLinkSection.innerHTML = '<a href="/gleb/stat" class="stat-link">📊 Посмотреть статистику за неделю</a>';
+        }
+    }
 });
 
 /**
