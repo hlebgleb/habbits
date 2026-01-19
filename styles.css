@@ -692,6 +692,37 @@ input:disabled + .toggle-slider {
     color: #155724;
 }
 
+/* Ссылка на статистику */
+.stat-link {
+    display: block;
+    text-align: center;
+    padding: 18px 20px;
+    margin-top: 20px;
+    background: rgba(255, 255, 255, 0.9);
+    border-radius: 12px;
+    color: #667eea;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 1.05rem;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+.stat-link:hover {
+    background: white;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+}
+
+.stat-link:active {
+    transform: translateY(0);
+}
+
+.back-link {
+    margin-top: 30px;
+    background: rgba(255, 255, 255, 0.7);
+}
+
 /* Привычки */
 .habits-list {
     background: #f8f9fa;
