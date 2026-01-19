@@ -12,8 +12,8 @@ services:
     environment:
       - PORT=3000
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:3000/"]
+      test: ["CMD", "curl", "-f", "--max-time", "5", "http://localhost:3000/"]
       interval: 30s
       timeout: 10s
-      retries: 3
+      retries: 2
       start_period: 10s
