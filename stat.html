@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Статистика привычек</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📊</text></svg>">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1 class="stat-title">📊 Статистика</h1>
+        </header>
+
+        <div class="stat-container">
+            <!-- Селектор недели -->
+            <div class="week-selector-section">
+                <h2 class="category-title">📅 Выберите неделю</h2>
+                <div class="week-selector">
+                    <button class="week-nav-button" onclick="previousWeek()">←</button>
+                    <span class="week-display" id="weekDisplay">12 - 18 января</span>
+                    <button class="week-nav-button" onclick="nextWeek()">→</button>
+                </div>
+                <div class="week-hint" id="weekHint">Неделя 3, 2026</div>
+            </div>
+
+            <!-- Кнопка расчета -->
+            <div class="calculate-section">
+                <button id="calculateButton" class="submit-button" onclick="calculateStats()">
+                    Посчитать
+                </button>
+            </div>
+
+            <!-- Результаты -->
+            <div id="resultsSection" class="results-section" style="display: none;">
+                <!-- Уровень энергии -->
+                <div class="result-block">
+                    <h2 class="category-title">💡 Daily Avg Score</h2>
+                    <div class="energy-result">
+                        <div class="energy-calculation" id="energyCalculation">
+                            <!-- (3 + 5 + 1 + ...) / 7 = X -->
+                        </div>
+                        <div class="energy-summary" id="energySummary">
+                            <!-- daily avg score за 12 янв - 18 янв = 3 -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Привычки -->
+                <div class="result-block" id="habitsResults">
+                    <!-- Динамически заполняется -->
+                </div>
+            </div>
+
+            <!-- Загрузка -->
+            <div id="loadingSection" class="loading" style="display: none;">
+                Загрузка данных из Notion...
+            </div>
+
+            <!-- Ошибка -->
+            <div class="error-message" id="errorMessage" style="display: none;"></div>
+        </div>
+    </div>
+
+    <script src="database-config.js"></script>
+    <script src="notion-api.js"></script>
+    <script src="stat.js"></script>
+</body>
+</html>

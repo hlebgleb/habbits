@@ -504,3 +504,235 @@ input:disabled + .toggle-slider {
         font-size: 0.95rem;
     }
 }
+
+/* ==================== */
+/* Страница статистики  */
+/* ==================== */
+
+.stat-title {
+    font-size: 2.5rem;
+    color: white;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+    margin-bottom: 10px;
+}
+
+.stat-container {
+    background: white;
+    border-radius: 20px;
+    padding: 30px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+}
+
+/* Селектор недели */
+.week-selector-section {
+    margin-bottom: 30px;
+}
+
+.week-selector {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 20px;
+    margin-top: 15px;
+}
+
+.week-nav-button {
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    border: 2px solid #e9ecef;
+    background: #f8f9fa;
+    color: #495057;
+    font-size: 1.4rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.week-nav-button:hover {
+    background: #e9ecef;
+    border-color: #667eea;
+    color: #667eea;
+    transform: scale(1.05);
+}
+
+.week-nav-button:active {
+    transform: scale(0.95);
+}
+
+.week-display {
+    font-size: 1.4rem;
+    font-weight: 600;
+    color: #2d3748;
+    min-width: 200px;
+    text-align: center;
+}
+
+.week-hint {
+    text-align: center;
+    margin-top: 10px;
+    color: #6c757d;
+    font-size: 0.95rem;
+}
+
+/* Кнопка расчета */
+.calculate-section {
+    text-align: center;
+    margin-bottom: 30px;
+    padding-bottom: 25px;
+    border-bottom: 2px solid #e9ecef;
+}
+
+/* Результаты */
+.results-section {
+    margin-top: 20px;
+}
+
+.result-block {
+    margin-bottom: 30px;
+}
+
+/* Энергия */
+.energy-result {
+    background: #f8f9fa;
+    border-radius: 12px;
+    padding: 25px;
+    border: 2px solid #e9ecef;
+}
+
+.energy-calculation {
+    font-size: 1.1rem;
+    color: #495057;
+    margin-bottom: 15px;
+    font-family: 'Monaco', 'Courier New', monospace;
+    text-align: center;
+}
+
+.energy-summary {
+    font-size: 1.2rem;
+    color: #2d3748;
+    text-align: center;
+}
+
+.score-value {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #667eea;
+}
+
+.no-data {
+    color: #6c757d;
+    font-style: italic;
+}
+
+/* Привычки */
+.habits-list {
+    background: #f8f9fa;
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 20px;
+    border: 2px solid #e9ecef;
+}
+
+.habit-stat-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 15px;
+    margin-bottom: 8px;
+    border-radius: 8px;
+    background: white;
+    transition: all 0.2s ease;
+}
+
+.habit-stat-item:last-child {
+    margin-bottom: 0;
+}
+
+.habit-stat-name {
+    font-size: 1rem;
+    color: #2d3748;
+}
+
+.habit-stat-value {
+    font-family: 'Monaco', 'Courier New', monospace;
+    font-size: 1rem;
+    font-weight: 600;
+    color: #495057;
+}
+
+/* Цветовая индикация выполнения */
+.habit-complete {
+    background: #d4edda;
+    border: 1px solid #c3e6cb;
+}
+
+.habit-complete .habit-stat-name,
+.habit-complete .habit-stat-value {
+    color: #155724;
+}
+
+.habit-partial {
+    background: #fff3cd;
+    border: 1px solid #ffeeba;
+}
+
+.habit-partial .habit-stat-name,
+.habit-partial .habit-stat-value {
+    color: #856404;
+}
+
+.habit-zero {
+    background: #f8d7da;
+    border: 1px solid #f5c6cb;
+}
+
+.habit-zero .habit-stat-name,
+.habit-zero .habit-stat-value {
+    color: #721c24;
+}
+
+/* Адаптив для статистики */
+@media (max-width: 600px) {
+    .stat-title {
+        font-size: 2rem;
+    }
+
+    .stat-container {
+        padding: 20px;
+    }
+
+    .week-display {
+        font-size: 1.1rem;
+        min-width: 150px;
+    }
+
+    .week-nav-button {
+        width: 40px;
+        height: 40px;
+        font-size: 1.2rem;
+    }
+
+    .energy-calculation {
+        font-size: 0.95rem;
+    }
+
+    .energy-summary {
+        font-size: 1rem;
+    }
+
+    .habit-stat-item {
+        padding: 10px 12px;
+    }
+
+    .habit-stat-name {
+        font-size: 0.9rem;
+    }
+
+    .habit-stat-value {
+        font-size: 0.9rem;
+    }
+}

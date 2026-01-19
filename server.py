@@ -45,6 +45,11 @@ def gleb():
     """Страница для Глеба"""
     return send_from_directory('.', 'index.html')
 
+@app.route('/gleb/stat')
+def gleb_stat():
+    """Страница статистики для Глеба"""
+    return send_from_directory('.', 'stat.html')
+
 @app.route('/dasha')
 def dasha():
     """Страница для Даши"""
