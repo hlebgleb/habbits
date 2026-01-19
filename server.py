@@ -77,6 +77,41 @@ def gleb_stat():
     """Страница статистики для Глеба"""
     return send_from_directory('.', 'stat.html')
 
+@app.route('/manifest.json')
+def manifest():
+    """Динамический манифест PWA в зависимости от referer"""
+    # Определяем пользователя из referer
+    referer = request.headers.get('Referer', '')
+    if '/dasha' in referer:
+        user = 'dasha'
+        name = 'Привычки Даши'
+        start_url = '/dasha'
+    else:
+        user = 'gleb'
+        name = 'Трекер Привычек'
+        start_url = '/gleb'
+    
+    manifest_data = {
+        "name": name,
+        "short_name": "Привычки",
+        "description": "Ежедневный трекер привычек с напоминаниями",
+        "start_url": start_url,
+        "display": "standalone",
+        "background_color": "#667eea",
+        "theme_color": "#667eea",
+        "orientation": "portrait",
+        "icons": [
+            {
+                "src": "/icons/icon.svg",
+                "sizes": "any",
+                "type": "image/svg+xml",
+                "purpose": "any"
+            }
+        ]
+    }
+    
+    return jsonify(manifest_data)
+
 @app.route('/dasha')
 def dasha():
     """Страница для Даши"""
