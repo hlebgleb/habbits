@@ -332,26 +332,59 @@ function displayEnergyResults(energyData, monday, sunday) {
     const calculationEl = document.getElementById('energyCalculation');
     const summaryEl = document.getElementById('energySummary');
 
-    if (energyData.length === 0) {
-        calculationEl.innerHTML = '<span class="no-data">Нет данных за этот период</span>';
-        summaryEl.innerHTML = '';
-        return;
+    // Создаём map дата -> score
+    const scoreByDate = {};
+    for (const item of energyData) {
+        if (item.date) {
+            scoreByDate[item.date] = item.score;
+        }
     }
 
-    // Сортируем по дате
-    energyData.sort((a, b) => new Date(a.date) - new Date(b.date));
+    // Дни недели (короткие названия)
+    const dayNames = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'];
+    
+    // Генерируем все 7 дней недели
+    const days = [];
+    for (let i = 0; i < 7; i++) {
+        const date = new Date(monday);
+        date.setDate(monday.getDate() + i);
+        const dateStr = formatDateISO(date);
+        days.push({
+            name: dayNames[i],
+            date: dateStr,
+            score: scoreByDate[dateStr] || null
+        });
+    }
 
-    // Формируем строку расчета
-    const scores = energyData.map(d => d.score);
-    const sum = scores.reduce((a, b) => a + b, 0);
-    const avg = (sum / scores.length).toFixed(1);
+    // Считаем среднее только по дням с данными
+    const validScores = days.filter(d => d.score !== null).map(d => d.score);
+    const avg = validScores.length > 0 
+        ? (validScores.reduce((a, b) => a + b, 0) / validScores.length).toFixed(1)
+        : '—';
 
-    const calcString = `(${scores.join(' + ')}) / ${scores.length} = <strong>${avg}</strong>`;
-    calculationEl.innerHTML = calcString;
+    // Формируем таблицу
+    let tableHtml = '<table class="energy-table"><thead><tr>';
+    
+    // Заголовки — дни недели
+    for (const day of days) {
+        tableHtml += `<th>${day.name}</th>`;
+    }
+    tableHtml += '</tr></thead><tbody><tr>';
+    
+    // Значения — скоры
+    for (const day of days) {
+        const scoreClass = day.score !== null ? `score-${day.score}` : 'score-empty';
+        const scoreText = day.score !== null ? day.score : '—';
+        tableHtml += `<td class="${scoreClass}">${scoreText}</td>`;
+    }
+    tableHtml += '</tr></tbody></table>';
+
+    calculationEl.innerHTML = tableHtml;
 
     // Формируем итоговую строку
     const periodStr = `${formatDateShort(monday)} - ${formatDateShort(sunday)}`;
-    summaryEl.innerHTML = `<strong>daily avg score</strong> за ${periodStr} = <span class="score-value">${avg}</span>`;
+    const countText = validScores.length > 0 ? `(${validScores.length} из 7 дней)` : '';
+    summaryEl.innerHTML = `<strong>daily avg score</strong> за ${periodStr} = <span class="score-value">${avg}</span> <span class="score-count">${countText}</span>`;
 }
 
 /**
