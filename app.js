@@ -2,22 +2,17 @@
 
 // Статичный список привычек с категориями для Глеба
 const GLEB_HABITS_BY_CATEGORY = {
-    'Foundation & Health': [
-        'Daily',
+    'H&B': [
         'Healthy food',
-        'Workouts',
+        'Cold shower',
         'Doomscroll < 30m',
         'Go outside'
     ],
-    'Craft & Outs / Create': [
-        'Deep work sessions',
-        'Outs this week'
+    'W&SD': [
+        'Daily',
+        'Deep work sessions'
     ],
-    'Learn & Grow / Explore': [
-        'Learning sessions',
-        'Inner work'
-    ],
-    'Connections / People': [
+    'R&J': [
         'Family call',
         'Friday date',
         'Offline go out',
@@ -53,7 +48,7 @@ let habitsState = {};
 let energyLevel = null; // Выбранный уровень энергии
 
 // Привычки с каунтером (вместо тумблера)
-const COUNTER_HABITS = ['Deep work sessions', 'Learning sessions'];
+const COUNTER_HABITS = ['Deep work sessions'];
 
 // Варианты ответа для вопроса об энергии
 // ВАЖНО: Названия должны точно совпадать с вариантами в Notion Select поле
@@ -469,14 +464,11 @@ function getHabitEmoji(habitName) {
     const emojiMap = {
         'daily': '🌅',
         'healthy food': '🥗',
-        'workouts': '💪',
+        'cold shower': '🚿',
         'doomscroll': '📱',
         'go outside': '🌳',
         'deep work': '🎯',
-        'outs': '📝',
-        'learning': '📚',
-        'inner work': '🧘',
-        'family': '👨‍👩‍👧‍👦',
+        'family': '👧',
         'date': '💑',
         'offline': '🎉',
         'reaching out': '💬',
