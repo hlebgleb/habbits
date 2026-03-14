@@ -100,7 +100,7 @@ def send_notification(user, message):
             print(f"❌ Ошибка отправки push для {user}: {e}")
             failed += 1
             # Если подписка невалидна (устройство отписалось), помечаем для удаления
-            if e.response and e.response.status_code in [404, 410]:
+            if e.response is not None and e.response.status_code in [404, 410]:
                 invalid_endpoints.append(sub.get('endpoint'))
     
     # Удаляем невалидные подписки
